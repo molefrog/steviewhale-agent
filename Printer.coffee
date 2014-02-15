@@ -2,16 +2,29 @@ cups = require "cupsidity"
 _    = require "lodash"
 Q    = require "q"
 
+{ EventEmitter } = require "events" 
+
 ###
 # Class Printer represents high-level interface for printing 
 # using specific printer destination
 ###
-class Printer 
+class Printer extends EventEmitter
 	constructor : (@destination) ->
 		@jobs = {}
 
-		@state  = 0
+		@state  = @stateName 0
 		@reason = "none"
+
+	###
+	# This function converts printer state code to human-readable
+	# state string 
+	###
+	stateName : (number) ->
+		switch number
+			when 3 then "idle"
+			when 4 then "processing"
+			when 5 then "stopped"
+			else "unknown"
 
 	###
 	# Cancels all printer jobs	
@@ -64,17 +77,17 @@ class Printer
 		dest = dests[ idx ]
 
 		reason = dest.options['printer-state-reasons']
-		state  = dest.options['printer-state']
+		state  = @stateName parseInt dest.options['printer-state']
 
 		stateChanged  = (state  != @state)
 		reasonChanged = (reason != @reason)
 
 		if stateChanged
-			console.log "State changed #{@state} -> #{state}"
+			@emit "state-changed", @state, state
 			@state = state
 
 		if reasonChanged
-			console.log "Reason changed #{@reason} -> #{reason}"
+			@emit "reason-changed", @reason, reason
 			@reason = reason
 			
 			if @reason != 'none'
@@ -90,7 +103,7 @@ class Printer
 			cupsJob = cupsJobs[ idx ]
 
 			if cupsJob.state != job.state
-				console.log "Job ##{job.id} state changed #{job.state} -> #{cupsJob.state}"
+				@emit "job-state-changed", job, job.state, cupsJob.state
 				job.state = cupsJob.state
 
 				switch job.state
@@ -106,7 +119,6 @@ class Printer
 						cups.cancelJob
 							dest : @destination
 							id : job.id
-
 
 	###
 	# Function enables state change check 
@@ -130,6 +142,15 @@ options =
 	media : "Postcard(4x6in)"
 
 printer = new Printer destination
+
+printer.on "state-changed", (from, to)->
+	console.log "State #{from} => #{to}"
+
+printer.on "reason-changed", (from, to)->
+	console.log "Reason #{from} => #{to}"
+
+printer.on "job-state-changed", (job, from, to)->
+	console.log "Jon ##{job.id} #{from} => #{to}"
 
 do printer.cancelAll
 do printer.startCheck
