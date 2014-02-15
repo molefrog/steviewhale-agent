@@ -8,7 +8,7 @@ Q    = require "q"
 # Class Printer represents high-level interface for printing 
 # using specific printer destination
 ###
-class Printer extends EventEmitter
+module.exports = class Printer extends EventEmitter
 	constructor : (@destination) ->
 		@jobs = {}
 
@@ -131,33 +131,4 @@ class Printer extends EventEmitter
 	stopCheck : ->
 		clearInterval @intervalId if @intervalId?
 
-
-
-####
-# Usage
-####
-filename = "1.jpg"
-destination = "Canon_CP800"
-options = 
-	media : "Postcard(4x6in)"
-
-printer = new Printer destination
-
-printer.on "state-changed", (from, to)->
-	console.log "State #{from} => #{to}"
-
-printer.on "reason-changed", (from, to)->
-	console.log "Reason #{from} => #{to}"
-
-printer.on "job-state-changed", (job, from, to)->
-	console.log "Jon ##{job.id} #{from} => #{to}"
-
-do printer.cancelAll
-do printer.startCheck
-
-printer.print(filename, options)
-.then ->
-	console.log "# Job done!"
-.fail ->
-	console.log "# Job failed!"
 
