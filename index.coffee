@@ -1,56 +1,67 @@
-# io = require "socket.io-client"
+log     = require "./app/utils/log"
+config  = require "./app/utils/config"
+Printer = require "./app/Printer"
 
-# hashing = (random, secret) ->
-# 	(require "crypto").createHash('md5').update(random + secret).digest('hex')
-
-
-# name   = ""
-# secret = "" 
-
-# socket = io.connect "http://localhost:8080/pool"
- 
+crypto  = require "crypto"
+io      = require "socket.io-client"
 
 
+###
+# Initializing printer
+###
+printer = new Printer config.get "printer:name"
+log.info "Selected printer #{config.get 'printer:name'}"
 
-# ####
-# # Usage
-# ####
-# filename = "1.jpg"
-# destination = "Canon_CP800"
-# options = 
-# 	media : "Postcard(4x6in)"
+printer.on "state-changed", (from, to)->
+	log.info "Printer state #{from} => #{to}"
 
-# printer = new Printer destination
+printer.on "reason-changed", (from, to)->
+	log.info "Printer reason #{from} => #{to}"
 
-# printer.on "state-changed", (from, to)->
-# 	console.log "State #{from} => #{to}"
+printer.on "job-state-changed", (job, from, to)->
+	log.info "Job ##{job.id} state #{from} => #{to}"
 
-# printer.on "reason-changed", (from, to)->
-# 	console.log "Reason #{from} => #{to}"
-
-# printer.on "job-state-changed", (job, from, to)->
-# 	console.log "Jon ##{job.id} #{from} => #{to}"
-
-# do printer.cancelAll
-# do printer.startCheck
-
-# printer.print(filename, options)
-# .then ->
-# 	console.log "# Job done!"
-# .fail ->
-# 	console.log "# Job failed!"
+do printer.cancelAll
+do printer.startCheck
 
 
-# socket.on "connect", ->
-# 	console.log "connected"
+# Hashing algorithm that is used for authorization
+hashing = (random, secret) ->
+	hash = crypto.createHash "md5"
+	hash.update(random + secret).digest "hex"
 
 
-# 	socket.once "handshake", (random, cb) ->
-# 		cb name, hashing(random, secret)
+tryConnect = ->
+	address = config.get "pool:address"
+	timeout = config.get "pool:timeout"
+	name    = config.get "pool:name"
+	secret  = config.get "pool:secret" 
 
-# 	socket.once "handshake-success", ->
-# 		console.log "Fuck yeah!"
+	log.info "Trying to connect to #{address}"
+	socket = io.connect address,
+		transports : [ "websocket" ]
+	
+	socket.on "connect", ->
+		log.info "Connected. Trying to authorize as ##{name}"
+
+	socket.on "handshake", (random, cb) ->
+		log.info "Got random #{random}. Sending answer back."
+		cb name, hashing(random, secret)
+
+	socket.on "handshake-success", ->
+		log.info "Authorization as ##{name} passed!"
+
+	socket.on "disconnect", ->
+		log.warn "Disconnected from #{address}"
+
+	socket.on "error", ->
+		log.warn "Connection problems. Will try againg in #{timeout}ms"
+		setTimeout tryConnect, timeout
+
+	# TODO:
+	socket.on "print", (url, cb) ->
 
 
-# socket.on "disconnect", ->
-# 	console.log "disconnected"
+do tryConnect
+
+
