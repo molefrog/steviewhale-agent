@@ -3,18 +3,19 @@ _    = require "lodash"
 Q    = require "q"
 
 ###
-# Class Printer represents high-level interface for printing using specific 
-# printer destination
+# Class Printer represents high-level interface for printing 
+# using specific printer destination
 ###
 class Printer 
 	constructor : (@destination) ->
-		@jobsDefer = {}
+		@jobs = {}
 
-		@state =
-			number : 0
-			reason : "none"
+		@state  = 0
+		@reason = "none"
 
-
+	###
+	# Cancels all printer jobs	
+	###
 	cancelAll : ->
 		jobs = cups.getJobs
 			dest  : @destination
@@ -22,10 +23,12 @@ class Printer
 
 		_.each jobs, (job) =>
 			cups.cancelJob
-				dest : @destination
-				id   : job.id
+				dest  : @destination
+				id    : job.id
 
-
+	###
+	# Prints file. Returns deferred object.
+	###
 	print : (filename, options) ->
 		deferred = do Q.defer
 
@@ -39,42 +42,75 @@ class Printer
 			do deferred.reject
 			return deferred.promise
 
-		@jobsDefer[jobId] = 
+		@jobs[jobId] = 
 			id    : jobId 
 			defer : deferred	
+			state : "none"
 
 		deferred.promise
 
-
-
+	###
+	# This function is used to check whether printer or job 
+	# status has changed
+	### 
 	stateCheckRoutine : ->
-		dests = cups.getDests()
+		dests = do cups.getDests
 		
-		idx = _.findIndex dests, (dest) => dest.name == @destination
+		idx = _.findIndex dests, (dest) => 
+			dest.name == @destination
+	
 		return if idx == -1
 
 		dest = dests[ idx ]
 
 		reason = dest.options['printer-state-reasons']
-		number = dest.options['printer-state']
+		state  = dest.options['printer-state']
 
-		stateChanged  = (number != @state.number)
-		reasonChanged = (reason != @state.reason)
+		stateChanged  = (state  != @state)
+		reasonChanged = (reason != @reason)
 
-		if stateChanged or reasonChanged
-			console.log "State changed #{@state.number} -> #{number} | #{@state.reason} -> #{reason}"
+		if stateChanged
+			console.log "State changed #{@state} -> #{state}"
+			@state = state
+
+		if reasonChanged
+			console.log "Reason changed #{@reason} -> #{reason}"
+			@reason = reason
 			
-			if reasonChanged and reason != 'none'
-				console.log "Something went wrong!"
+			if @reason != 'none'
 				do @cancelAll
 
-				_.each @jobsDefer, (job) => 
-					do job.defer.reject
-					delete @jobsDefer[ job.id ] 
+		cupsJobs = cups.getJobs
+			dest : @destination
 
-			@state.reason = reason
-			@state.number = number
+		_.each @jobs, (job) =>
+			idx = _.findIndex cupsJobs, (j) -> j.id == job.id
+			return if idx == -1
 
+			cupsJob = cupsJobs[ idx ]
+
+			if cupsJob.state != job.state
+				console.log "Job ##{job.id} state changed #{job.state} -> #{cupsJob.state}"
+				job.state = cupsJob.state
+
+				switch job.state
+					when "completed"
+						do job.defer.resolve
+						delete @jobs[ job.id ]
+
+					when "cancelled"
+						do job.defer.reject
+						delete @jobs[ job.id ]
+
+					when "stopped", "aborted"
+						cups.cancelJob
+							dest : @destination
+							id : job.id
+
+
+	###
+	# Function enables state change check 
+	###
 	startCheck : (interval = 1000) ->
 		@intervalId = setInterval =>
 			do @stateCheckRoutine
@@ -103,6 +139,4 @@ printer.print(filename, options)
 	console.log "# Job done!"
 .fail ->
 	console.log "# Job failed!"
-
-
 
