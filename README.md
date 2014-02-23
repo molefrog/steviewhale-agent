@@ -1,5 +1,5 @@
-# Printiculo Agent
-This utility is used in order to connect to [Printiculo](http://github.com/molefrog/printiculo) server and act as a printing agent that will
+# StevieWhale Agent
+This utility is used in order to connect to [StevieWhale](http://github.com/molefrog/steviewhale) server and act as a printing agent that will
 accept printing jobs remotely. The concept of RPC (Remote Procedure) through WebSockets is used here. The `socket.io` library is used to set up and hold connection with the server (also called as Pool of printing agents).
 
 # Configuration
