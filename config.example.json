@@ -1,0 +1,15 @@
+{
+	"pool"  : {
+		"address" : "http://steviewhale.com/pool",
+		"name"    : "<station-name>",
+		"secret"  : "<station-secrey>",
+		"timeout" : 20000
+	}, 
+
+	"printer" : {
+		"name" : "Canon_CP800",
+		"options" : {
+			"media" : "Postcard(4x6in)"
+		}
+	}
+}
