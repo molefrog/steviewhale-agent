@@ -1,0 +1,1 @@
+ffmpeg -i stream.sdp -f mpeg1video -b 600k -r 30 http://steviewhale.com/streaming/station/secret/240/240

@@ -19,3 +19,5 @@ build
 
 node_modules
 config.json
+
+stream/stream.sh
