@@ -33,10 +33,10 @@ hashing = (random, secret) ->
 	hash.update(random + secret).digest "hex"
 
 tryConnect = ->
-	address = config.get "pool:address"
-	timeout = config.get "pool:timeout"
-	name    = config.get "pool:name"
-	secret  = config.get "pool:secret" 
+	address  = config.get "pool:address"
+	timeout  = config.get "pool:timeout"
+	name     = config.get "pool:name"
+	secret   = config.get "pool:secret" 
 
 	log.info "Trying to connect to #{address}"
 	socket = io.connect address,
@@ -44,8 +44,13 @@ tryConnect = ->
 		# This option is important when the very first
 		# connect has failed
 		"force new connection" : true
+		
+		# We implement our own reconnection algorithm
+		"reconnect" : false
 	
+	attempt = 0
 	socket.on "connect", ->
+		attempt = 0
 		log.info "Connected. Trying to authorize as ##{name}"
 
 	socket.on "handshake", (random, cb) ->
@@ -56,12 +61,12 @@ tryConnect = ->
 		log.info "Authorization as ##{name} passed!"
 
 	socket.on "disconnect", ->
-		log.warn "Disconnected from #{address}"
+		log.warn "Disconnected from #{address}. Will try againg in #{timeout}ms"
+		setTimeout tryConnect, timeout
 
 	socket.on "error", ->
-		log.warn "Connection problems. Will try againg in #{timeout}ms"
+		log.warn "Connection problems."
 		do socket.disconnect
-		setTimeout tryConnect, timeout
 
 	socket.on "print", (url, cb) ->
 		filename = "#{__dirname}/#{uid 24}.jpg"
