@@ -11,7 +11,7 @@
     "agent",
     "sockets"
   ],
-  "readme" : "README.md",
+  "readme": "README.md",
   "author": "molefrog",
   "license": "MIT",
   "dependencies": {
@@ -22,6 +22,7 @@
     "nconf": "~0.6.9",
     "winston": "~0.7.2",
     "request": "~2.33.0",
-    "uid": "0.0.2"
+    "uid": "0.0.2",
+    "canvas": "^1.1.3"
   }
 }

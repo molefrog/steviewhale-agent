@@ -52,7 +52,7 @@ module.exports = class Printer extends EventEmitter
 			options  : options
 
 		if jobId == 0
-			do deferred.reject
+			deferred.reject "cups.printFile returned 0"
 			return deferred.promise
 
 		@jobs[jobId] = 
@@ -112,7 +112,7 @@ module.exports = class Printer extends EventEmitter
 						delete @jobs[ job.id ]
 
 					when "cancelled"
-						do job.defer.reject
+						job.defer.reject "Job #{job.id} cancelled"
 						delete @jobs[ job.id ]
 
 					when "stopped", "aborted"

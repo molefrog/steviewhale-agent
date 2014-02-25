@@ -2,6 +2,7 @@ log      = require "./app/utils/log"
 config   = require "./app/utils/config"
 Printer  = require "./app/Printer"
 download = require "./app/utils/download"
+render   = require "./app/render"
 
 crypto  = require "crypto"
 io      = require "socket.io-client"
@@ -70,16 +71,33 @@ tryConnect = ->
 
 	socket.on "print", (url, cb) ->
 		filename = "#{__dirname}/#{uid 24}.jpg"
+		rendered = null
 
+		log.info "Got printer job from the server #{url}"
+
+		# TODO: handle promise errors 
 		download(url, filename)
 			.then ->
-				printer.print filename, config.get "printer:options"
-			.then ->
-				cb null
-			.fail ->
-				cb "Printing error!"
+				log.info "File saved to #{filename}"
+
+				render(filename)
+				.then (ren) ->
+					rendered = ren
+					log.info "File rendered to #{rendered}"
+
+					printer.print(rendered, config.get "printer:options")
+					.fail (err) ->
+						console.log err
+					.then ->
+						log.info "Job successfully printed"
+						cb null
+
+			.fail (err) ->
+				log.warn "Printing error: #{err}"
+				cb err
 			.fin ->
 				fs.unlink filename
+				fs.unlink rendered
 
 do tryConnect
 
