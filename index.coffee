@@ -87,8 +87,8 @@ tryConnect = ->
 
 				printer.print(printPath, config.get "printer:options")
 				.fin ->
-					log.info "Removed temporary file #{rendered}"
-					fs.unlink rendered
+					log.info "Removed temporary file #{printPath}"
+					fs.unlink printPath
 			.then ->
 				log.info "Job successfully printed"
 				cb null

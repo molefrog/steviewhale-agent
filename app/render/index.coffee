@@ -43,9 +43,9 @@ module.exports = (filename) ->
 			out = fs.createWriteStream outFilename
 			stream = canvas.pngStream()
 
-			stream.on "data", (chunk) -> out.write chunk
-			stream.on "end", ->
-				out.end()
+			r = stream.pipe out
+
+			r.on "close", ->
 				deferred.resolve outFilename
 
 	deferred.promise
