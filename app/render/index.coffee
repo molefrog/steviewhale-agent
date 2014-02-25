@@ -7,13 +7,15 @@ path   = require "path"
 templateFilename = path.resolve "#{__dirname}/template.png"
 marginFraction = 0.05
 
+
 module.exports = (filename) ->
 	deferred = do Q.defer
 
-	deferred.reject()
 	fs.readFile templateFilename, (err, templateBuffer) ->
 		if err
+			console.log err
 			return deferred.reject "Error reading template file #{err}"
+
 
 		img = new Canvas.Image
 		img.src = templateBuffer
@@ -23,7 +25,9 @@ module.exports = (filename) ->
 
 		fs.readFile filename, (err, sourceBuffer) ->
 			if err
+				console.log err
 				return deferred.reject "Error reading source file #{err}"
+
 
 			source = new Canvas.Image
 			source.src = sourceBuffer

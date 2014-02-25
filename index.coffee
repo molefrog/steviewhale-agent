@@ -7,6 +7,7 @@ render   = require "./app/render"
 crypto  = require "crypto"
 io      = require "socket.io-client"
 uid	    = require "uid"
+path    = require "path"
 fs      = require "fs"
 
 ###
@@ -71,7 +72,6 @@ tryConnect = ->
 
 	socket.on "print", (url, cb) ->
 		filename = "#{__dirname}/#{uid 24}.jpg"
-		rendered = null
 
 		log.info "Got printer job from the server #{url}"
 
@@ -81,24 +81,25 @@ tryConnect = ->
 				log.info "File saved to #{filename}"
 
 				render(filename)
-				.then (ren) ->
-					rendered = ren
-					log.info "File rendered to #{rendered}"
+			.then (rendered) ->
+				printPath = path.resolve rendered
+				log.info "File rendered to #{printPath}"
 
-					printer.print(rendered, config.get "printer:options")
-					.fail (err) ->
-						console.log err
-					.then ->
-						log.info "Job successfully printed"
-						cb null
+				printer.print(printPath, config.get "printer:options")
+				.fin ->
+					log.info "Removed temporary file #{rendered}"
+					fs.unlink rendered
+			.then ->
+				log.info "Job successfully printed"
+				cb null
 
 			.fail (err) ->
 				log.warn "Printing error: #{err}"
-				cb err
+				cb "Printing error"
 			.fin ->
+				log.info "Removed temporary file #{filename}"
 				fs.unlink filename
-				fs.unlink rendered
-
+				
 do tryConnect
 
 
