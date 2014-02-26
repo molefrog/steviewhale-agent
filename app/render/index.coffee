@@ -5,7 +5,7 @@ uid    = require "uid"
 path   = require "path"
 
 templateFilename = path.resolve "#{__dirname}/template.png"
-marginFraction = 0.05
+marginFraction = 0.065
 
 
 module.exports = (filename) ->
