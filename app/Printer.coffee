@@ -3,6 +3,7 @@ _    = require "lodash"
 Q    = require "q"
 
 { EventEmitter } = require "events" 
+config = require "./utils/config"
 
 ###
 # Class Printer represents high-level interface for printing 
@@ -60,6 +61,12 @@ module.exports = class Printer extends EventEmitter
 			defer : deferred	
 			state : "none"
 
+		setTimeout =>
+			cups.cancelJob
+				dest : @destination
+				id : jobId
+		, config.get("printer:printTimeout")
+
 		deferred.promise
 
 	###
@@ -75,7 +82,7 @@ module.exports = class Printer extends EventEmitter
 		return if idx == -1
 
 		dest = dests[ idx ]
-
+		
 		reason = dest.options['printer-state-reasons']
 		state  = @stateName parseInt dest.options['printer-state']
 
@@ -90,8 +97,9 @@ module.exports = class Printer extends EventEmitter
 			@emit "reason-changed", @reason, reason
 			@reason = reason
 			
-			if @reason != 'none'
-				do @cancelAll
+			# This method doesn't work properly!	
+			# if @reason != 'none'
+			# 	do @cancelAll
 
 		cupsJobs = cups.getJobs
 			dest : @destination
