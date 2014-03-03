@@ -11,6 +11,6 @@
 		"options" : {
 			"media" : "Postcard(4x6in)"
 		},
-		"printTimeout" : 120000
+		"printTimeout" : 300000
 	}
 }
