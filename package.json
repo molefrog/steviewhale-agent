@@ -16,7 +16,7 @@
   "license": "MIT",
   "dependencies": {
     "socket.io-client": "~0.9.16",
-    "cupsidity": "0.0.1",
+    "cupsidity": "0.0.2",
     "lodash": "~2.4.1",
     "q": "~1.0.0",
     "nconf": "~0.6.9",
