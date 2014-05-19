@@ -16,6 +16,7 @@ logs
 results
 build
 .grunt
+temp
 
 node_modules
 config.json

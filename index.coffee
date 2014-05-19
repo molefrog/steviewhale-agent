@@ -2,13 +2,16 @@ log      = require "./app/utils/log"
 config   = require "./app/utils/config"
 Printer  = require "./app/Printer"
 download = require "./app/utils/download"
-render   = require "./app/render"
 
 crypto  = require "crypto"
 io      = require "socket.io-client"
 uid	    = require "uid"
 path    = require "path"
 fs      = require "fs"
+
+tempFolder = path.resolve path.join __dirname, "temp"
+
+fs.mkdirSync(tempFolder) unless fs.existsSync(tempFolder)
 
 ###
 # Initializing printer
@@ -38,7 +41,7 @@ tryConnect = ->
 	address  = config.get "pool:address"
 	timeout  = config.get "pool:timeout"
 	name     = config.get "pool:name"
-	secret   = config.get "pool:secret" 
+	secret   = config.get "pool:secret"
 
 	log.info "Trying to connect to #{address}"
 	socket = io.connect address,
@@ -46,10 +49,10 @@ tryConnect = ->
 		# This option is important when the very first
 		# connect has failed
 		"force new connection" : true
-		
+
 		# We implement our own reconnection algorithm
 		"reconnect" : false
-	
+
 	attempt = 0
 	socket.on "connect", ->
 		attempt = 0
@@ -71,35 +74,26 @@ tryConnect = ->
 		do socket.disconnect
 
 	socket.on "print", (url, cb) ->
-		filename = "#{__dirname}/#{uid 24}.jpg"
+		filename = path.join tempFolder, "#{uid 24}.png"
 
 		log.info "Got printer job from the server #{url}"
 
-		# TODO: handle promise errors 
+		# TODO: handle promise errors
 		download(url, filename)
-			.then ->
-				log.info "File saved to #{filename}"
+		.then ->
+			log.info "File saved to #{filename}"
 
-				render(filename)
-			.then (rendered) ->
-				printPath = path.resolve rendered
-				log.info "File rendered to #{printPath}"
-
-				printer.print(printPath, config.get "printer:options")
-				.fin ->
-					log.info "Removed temporary file #{printPath}"
-					fs.unlink printPath
+			printer.print(filename, config.get "printer:options")
 			.then ->
 				log.info "Job successfully printed"
 				cb null
-
 			.fail (err) ->
 				log.warn "Printing error: #{err}"
 				cb "Printing error"
 			.fin ->
 				log.info "Removed temporary file #{filename}"
 				fs.unlink filename
-				
+
 do tryConnect
 
 
