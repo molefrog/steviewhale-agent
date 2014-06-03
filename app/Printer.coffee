@@ -2,11 +2,11 @@ cups = require "cupsidity"
 _    = require "lodash"
 Q    = require "q"
 
-{ EventEmitter } = require "events" 
+{ EventEmitter } = require "events"
 config = require "./utils/config"
 
 ###
-# Class Printer represents high-level interface for printing 
+# Class Printer represents high-level interface for printing
 # using specific printer destination
 ###
 module.exports = class Printer extends EventEmitter
@@ -18,7 +18,7 @@ module.exports = class Printer extends EventEmitter
 
 	###
 	# This function converts printer state code to human-readable
-	# state string 
+	# state string
 	###
 	stateName : (number) ->
 		switch number
@@ -28,7 +28,7 @@ module.exports = class Printer extends EventEmitter
 			else "unknown"
 
 	###
-	# Cancels all printer jobs	
+	# Cancels all printer jobs
 	###
 	cancelAll : ->
 		jobs = cups.getJobs
@@ -46,7 +46,7 @@ module.exports = class Printer extends EventEmitter
 	print : (filename, options) ->
 		deferred = do Q.defer
 
-		jobId = cups.printFile 
+		jobId = cups.printFile
 			dest     : @destination
 			title    : filename
 			filename : filename
@@ -56,9 +56,9 @@ module.exports = class Printer extends EventEmitter
 			deferred.reject "cups.printFile returned 0"
 			return deferred.promise
 
-		@jobs[jobId] = 
-			id    : jobId 
-			defer : deferred	
+		@jobs[jobId] =
+			id    : jobId
+			defer : deferred
 			state : "none"
 
 		setTimeout =>
@@ -70,19 +70,19 @@ module.exports = class Printer extends EventEmitter
 		deferred.promise
 
 	###
-	# This function is used to check whether printer or job 
+	# This function is used to check whether printer or job
 	# status has changed
-	### 
+	###
 	stateCheckRoutine : ->
 		dests = do cups.getDests
-		
-		idx = _.findIndex dests, (dest) => 
+
+		idx = _.findIndex dests, (dest) =>
 			dest.name == @destination
-	
+
 		return if idx == -1
 
 		dest = dests[ idx ]
-		
+
 		reason = dest.options['printer-state-reasons']
 		state  = @stateName parseInt dest.options['printer-state']
 
@@ -96,8 +96,8 @@ module.exports = class Printer extends EventEmitter
 		if reasonChanged
 			@emit "reason-changed", @reason, reason
 			@reason = reason
-			
-			# This method doesn't work properly!	
+
+			# This method doesn't work properly!
 			# if @reason != 'none'
 			# 	do @cancelAll
 
@@ -129,7 +129,7 @@ module.exports = class Printer extends EventEmitter
 							id : job.id
 
 	###
-	# Function enables state change check 
+	# Function enables state change check
 	###
 	startCheck : (interval = 1000) ->
 		@intervalId = setInterval =>

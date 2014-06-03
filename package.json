@@ -15,7 +15,7 @@
   "author": "molefrog",
   "license": "MIT",
   "dependencies": {
-    "socket.io-client": "~0.9.16",
+    "socket.io-client": "~1.0.4",
     "cupsidity": "0.0.2",
     "lodash": "~2.4.1",
     "q": "~1.0.0",

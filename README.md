@@ -7,17 +7,17 @@ In order to run application you have to have `config.json` file. Typically, it w
 ```JSON
 {
 	"pool"  : {
-		"address" : "http://steviewhale.com",
-		"name"    : "<Your stations name>",
-		"secret"  : "<Your stations secret>",
-		"timeout" : 20000
-	}, 
+		"address" : "http://steviewhale.com/pool",
+		"name"    : "<station-name>",
+		"secret"  : "<station-secret>"
+	},
 
 	"printer" : {
 		"name" : "Canon_CP800",
 		"options" : {
 			"media" : "Postcard(4x6in)"
-		}
+		},
+		"printTimeout" : 300000
 	}
 }
 ```

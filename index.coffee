@@ -44,20 +44,19 @@ tryConnect = ->
 	secret   = config.get "pool:secret"
 
 	log.info "Trying to connect to #{address}"
-	socket = io.connect address,
-		transports : [ "websocket" ]
-		# This option is important when the very first
-		# connect has failed
-		"force new connection" : true
 
-		# We implement our own reconnection algorithm
-		"reconnect" : false
+	socket = io address,
+		reconnection : true
 
-	attempt = 0
 	socket.on "connect", ->
-		attempt = 0
 		log.info "Connected. Trying to authorize as ##{name}"
 
+	socket.on "disconnect", ->
+		log.warn "Disconnected from #{address}."
+
+	###
+	# RPC functions
+	###
 	socket.on "handshake", (random, cb) ->
 		log.info "Got random #{random}. Sending answer back."
 		cb name, hashing(random, secret)
@@ -65,20 +64,11 @@ tryConnect = ->
 	socket.on "handshake-success", ->
 		log.info "Authorization as ##{name} passed!"
 
-	socket.on "disconnect", ->
-		log.warn "Disconnected from #{address}. Will try againg in #{timeout}ms"
-		setTimeout tryConnect, timeout
-
-	socket.on "error", ->
-		log.warn "Connection problems."
-		do socket.disconnect
-
 	socket.on "print", (url, cb) ->
 		filename = path.join tempFolder, "#{uid 24}.png"
 
 		log.info "Got printer job from the server #{url}"
 
-		# TODO: handle promise errors
 		download(url, filename)
 		.then ->
 			log.info "File saved to #{filename}"
@@ -91,8 +81,9 @@ tryConnect = ->
 				log.warn "Printing error: #{err}"
 				cb "Printing error"
 			.fin ->
-				log.info "Removed temporary file #{filename}"
 				fs.unlink filename
+				log.info "Removed temporary file #{filename}"
+
 
 do tryConnect
 

@@ -9,4 +9,3 @@ transports = [
 
 module.exports = new (winston.Logger)
   transports : transports
-  
